@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIP True Cost Estimator · SIPA</title>
+<meta name="description" content="Compare the total delivered cost of building with structural insulated panels against conventional stick framing.">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FBFBFC;
+  --surface:#FFFFFF;
+  --ink:#1B1E23;
+  --ink-2:#454B55;
+  --ink-3:#5F6570;
+  --line:#E5E7EA;
+  --line-soft:#EFF0F3;
+  --red:#B9212D;
+  --red-ink:#9E1C27;
+  --red-soft:#FBF0F1;
+  --green-ink:#1D6B45;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --z-sticky:10;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;top:0;left:0;right:0;height:3px;
+  background:var(--red);z-index:var(--z-sticky);
+}
+.wrap{max-width:740px;margin:0 auto;padding:3px 20px calc(48px + env(safe-area-inset-bottom))}
+a{color:var(--red-ink)}
+
+/* ---------- header ---------- */
+header{
+  display:flex;align-items:center;gap:12px;
+  padding:22px 0 18px;
+  border-bottom:1px solid var(--line);
+}
+.mark{
+  width:34px;height:34px;border-radius:9px;background:var(--red);
+  display:grid;place-items:center;flex:none;
+}
+.mark svg{display:block}
+.brand{display:flex;flex-direction:column;gap:1px}
+.brand b{font-size:15px;letter-spacing:-0.01em;font-weight:650}
+.brand span{font-size:12.5px;color:var(--ink-3)}
+header .tag{
+  margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap;
+}
+@media (max-width:520px){header .tag{display:none}}
+
+/* ---------- intro ---------- */
+.intro{padding:26px 0 6px}
+.intro h1{
+  font-size:clamp(1.55rem,5.4vw,2.05rem);
+  letter-spacing:-0.025em;line-height:1.15;font-weight:700;
+  text-wrap:balance;max-width:24ch;
+}
+.intro p{margin-top:9px;color:var(--ink-2);max-width:56ch}
+
+/* ---------- inputs ---------- */
+.inputs{
+  margin-top:22px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  padding:18px;
+  display:grid;gap:14px;
+  grid-template-columns:1fr;
+  box-shadow:0 1px 2px rgba(27,30,35,.04);
+}
+@media (min-width:560px){.inputs{grid-template-columns:0.8fr 1.1fr 1fr;gap:12px}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:600;letter-spacing:-0.005em}
+.field .hint{font-weight:400;color:var(--ink-3)}
+.field input,.field select{
+  font:inherit;font-size:16px;
+  color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 12px;min-height:44px;width:100%;
+  transition:border-color .15s ease,box-shadow .15s ease;
+  appearance:none;-webkit-appearance:none;
+}
+.field select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235F6570' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+}
+.field input:hover,.field select:hover{border-color:#D3D6DC}
+.field input:focus,.field select:focus{
+  outline:none;border-color:var(--red);
+  box-shadow:0 0 0 3px rgba(185,33,45,.14);
+}
+.field input::placeholder{color:#8A909B}
+.region-note{
+  grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  min-height:1em;
+}
+.region-note b{color:var(--ink-2);font-weight:600}
+
+/* ---------- result ---------- */
+.result{margin-top:28px}
+.result .label{
+  font-size:13px;font-weight:600;color:var(--ink-2);
+  display:flex;align-items:center;gap:8px;
+}
+.result .label::before{
+  content:"";width:8px;height:8px;border-radius:2px;background:var(--red);flex:none;
+}
+.headline{
+  font-size:clamp(2.7rem,11vw,4.4rem);
+  font-weight:750;letter-spacing:-0.035em;line-height:1.02;
+  font-variant-numeric:tabular-nums;
+  margin-top:6px;
+}
+.headline.negative{color:var(--red-ink)}
+.headline .dim{color:#C6CAD1}
+.result .verdict{margin-top:6px;color:var(--ink-2);max-width:58ch}
+.stats{
+  display:grid;gap:10px;margin-top:16px;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+}
+.stat{
+  border-radius:var(--r-md);padding:13px 15px 12px;
+  display:flex;flex-direction:column;gap:3px;
+  border:1px solid transparent;
+  transition:transform .18s cubic-bezier(.19,1,.22,1),box-shadow .18s ease;
+}
+.stat:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(27,30,35,.06)}
+.stat .s-label{font-size:11.5px;font-weight:600;letter-spacing:.015em}
+.stat b{
+  font-size:19px;font-weight:700;letter-spacing:-0.02em;
+  font-variant-numeric:tabular-nums;line-height:1.25;
+}
+.stat b small{font-size:12.5px;font-weight:600;letter-spacing:0}
+.stat.days{background:var(--red-soft);border-color:#F1D6D9}
+.stat.days .s-label,.stat.days b{color:var(--red-ink)}
+.stat.frame{background:#F2F3F5;border-color:#E3E5E9}
+.stat.frame .s-label{color:var(--ink-3)}
+.stat.frame b{color:var(--ink)}
+.stat.sip{background:#EDF6F1;border-color:#D6E9DF}
+.stat.sip .s-label,.stat.sip b{color:var(--green-ink)}
+.empty{
+  margin-top:10px;color:var(--ink-3);font-size:14px;
+  border:1px dashed var(--line);border-radius:var(--r-md);
+  padding:16px 18px;background:var(--surface);
+}
+
+/* ---------- sections ---------- */
+section{margin-top:38px}
+section>h2{
+  font-size:16px;font-weight:650;letter-spacing:-0.015em;
+  padding-bottom:10px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:10px;
+}
+section>h2 small{font-size:12.5px;font-weight:400;color:var(--ink-3);margin-left:auto;text-align:right}
+.hide{display:none !important}
+
+/* ---------- chart ---------- */
+.chart-box{margin-top:16px}
+.chart-box .canvas-wrap{position:relative;height:190px}
+.legend{
+  display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;
+  font-size:12px;color:var(--ink-2);
+}
+.legend i{
+  display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px;background:var(--sw,#999);
+}
+
+/* ---------- table ---------- */
+.table-wrap{overflow-x:auto;margin-top:4px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:13.5px}
+thead th{
+  text-align:right;font-weight:600;color:var(--ink-2);font-size:12px;
+  padding:12px 10px 8px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+thead th:first-child{text-align:left;padding-left:2px}
+tbody tr{transition:background .12s ease}
+tbody tr:not(.total):not(.grand):hover{background:#F7F8F9}
+tbody td{
+  padding:10px;border-bottom:1px solid var(--line-soft);
+  text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:top;
+}
+tbody td:first-child{text-align:left;white-space:normal;padding-left:2px;min-width:230px}
+td .item{font-weight:550}
+td .math{
+  display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  margin-top:3px;line-height:1.5;white-space:normal;
+}
+td .src{
+  display:inline-block;font-family:var(--mono);font-size:10px;color:var(--red-ink);
+  background:var(--red-soft);border-radius:4px;padding:1px 6px;margin-top:4px;
+}
+td.delta-pos{color:var(--green-ink);font-weight:600}
+td.delta-neg{color:var(--red-ink);font-weight:600}
+tr.total td{
+  border-top:1.5px solid var(--ink);border-bottom:none;
+  font-weight:700;font-size:14.5px;padding-top:12px;
+}
+tr.credit td{color:var(--ink-2)}
+tr.grand td{font-weight:750;font-size:15px;border-bottom:none;padding-top:4px}
+tr.grand td:first-child{color:var(--red-ink)}
+.sched{
+  margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  line-height:1.9;
+}
+.sched b{color:var(--ink-2);font-weight:600}
+
+/* ---------- assumptions ---------- */
+details.assump{
+  margin-top:16px;border:1px solid var(--line);border-radius:var(--r-lg);
+  background:var(--surface);overflow:hidden;
+}
+details.assump summary{
+  list-style:none;cursor:pointer;user-select:none;
+  display:flex;align-items:center;gap:10px;
+  padding:15px 18px;font-weight:600;font-size:14px;
+}
+details.assump summary::-webkit-details-marker{display:none}
+details.assump summary:hover{background:#F7F8F9}
+details.assump summary .sum-hint{font-weight:400;font-size:12.5px;color:var(--ink-3);margin-left:auto}
+details.assump summary svg{transition:transform .2s ease;flex:none;color:var(--ink-3)}
+details.assump[open] summary svg{transform:rotate(90deg)}
+details.assump[open] summary{border-bottom:1px solid var(--line)}
+.a-body{padding:6px 18px 20px}
+.a-group{padding-top:16px}
+.a-group h3{
+  font-size:12px;font-weight:650;color:var(--ink-2);
+  padding-bottom:8px;margin-bottom:2px;
+}
+.a-row{
+  display:grid;grid-template-columns:1fr 118px;gap:4px 14px;align-items:center;
+  padding:9px 0;border-top:1px solid var(--line-soft);
+}
+.a-row .a-label{font-size:13px;line-height:1.35}
+.a-row .a-src{font-family:var(--mono);font-size:10px;color:var(--ink-3);display:block;margin-top:2px}
+.a-row .a-in{display:flex;align-items:center;gap:6px;justify-self:end}
+.a-row input{
+  font:inherit;font-size:15px;font-variant-numeric:tabular-nums;
+  width:84px;text-align:right;
+  border:1px solid var(--line);border-radius:6px;padding:7px 8px;
+  background:var(--bg);color:var(--ink);min-height:38px;
+}
+.a-row input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,33,45,.12)}
+.a-row .unit{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:30px}
+.a-row .autotag{
+  font-family:var(--mono);font-size:9.5px;color:var(--red-ink);cursor:pointer;
+  background:none;border:none;text-decoration:underline;padding:0;
+}
+.cycle-grid{display:grid;grid-template-columns:1fr 74px 74px;gap:4px 10px;align-items:center;padding-top:4px}
+.cycle-grid .cg-h{font-family:var(--mono);font-size:10px;color:var(--ink-3);text-align:right}
+.cycle-grid .cg-l{font-size:12.5px;padding:4px 0}
+.cycle-grid input{
+  font:inherit;font-size:14px;text-align:right;width:100%;
+  border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--bg);min-height:34px;
+}
+.cycle-grid input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 2px rgba(185,33,45,.12)}
+.reset-row{padding-top:16px}
+.reset-row button{
+  font:inherit;font-size:12.5px;color:var(--ink-2);cursor:pointer;
+  background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 13px;
+}
+.reset-row button:hover{border-color:#C8CCD3;color:var(--ink)}
+.reset-row button:active{transform:translateY(1px)}
+
+/* ---------- refine ---------- */
+.refine ol{margin:14px 0 0;padding:0;list-style:none;counter-reset:r}
+.refine li{
+  counter-increment:r;position:relative;
+  padding:13px 0 13px 40px;border-bottom:1px solid var(--line-soft);
+}
+.refine li::before{
+  content:counter(r);position:absolute;left:0;top:14px;
+  width:24px;height:24px;border-radius:7px;
+  background:var(--ink);color:#fff;font-size:12px;font-weight:650;
+  display:grid;place-items:center;font-variant-numeric:tabular-nums;
+}
+.refine li b{font-weight:650}
+.refine li p{color:var(--ink-2);font-size:13.5px;margin-top:2px}
+.refine li .where{font-family:var(--mono);font-size:11px;color:var(--red-ink);margin-top:3px;display:block}
+
+/* ---------- disclaimer / footer ---------- */
+.disclaimer{
+  margin-top:38px;border:1px solid var(--line);border-radius:var(--r-md);
+  background:var(--surface);padding:15px 17px;
+  font-size:12.5px;color:var(--ink-2);line-height:1.6;
+}
+.disclaimer b{color:var(--ink)}
+footer{
+  margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font-size:12px;color:var(--ink-3);
+}
+footer .fm{font-family:var(--mono);font-size:10.5px}
+
+/* ---------- motion ---------- */
+.reveal{animation:rise .45s cubic-bezier(.19,1,.22,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M2 8.2 9 3l7 5.2" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4.2 9.8V15h9.6V9.8" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M7.2 15v-3.4h3.6V15" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="brand">
+    <b>SIPA</b>
+    <span>Structural Insulated Panel Association</span>
+  </div>
+  <span class="tag">TRUE COST ESTIMATOR</span>
+</header>
+
+<div class="intro">
+  <h1>What would this house cost with SIPs?</h1>
+  <p>Enter three things. We compare the full delivered cost of a SIP shell against conventional stick framing, including schedule, waste, and quality costs most bids leave out.</p>
+</div>
+
+<div class="inputs" id="inputsCard">
+  <div class="field">
+    <label for="zip">ZIP code</label>
+    <input id="zip" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="e.g. 43302" pattern="[0-9]*">
+  </div>
+  <div class="field">
+    <label for="sqft">Conditioned sq ft <span class="hint">above grade</span></label>
+    <input id="sqft" inputmode="numeric" placeholder="e.g. 2400" pattern="[0-9]*">
+  </div>
+  <div class="field">
+    <label for="basement">Basement</label>
+    <select id="basement">
+      <option value="none" selected>None</option>
+      <option value="unfinished">Unfinished</option>
+      <option value="finished">Finished</option>
+    </select>
+  </div>
+  <div class="region-note" id="regionNote"></div>
+</div>
+
+<div class="result" id="result">
+  <div class="label">Estimated savings with SIPs</div>
+  <div class="headline" id="headline" aria-live="polite"><span class="dim">$ —</span></div>
+  <p class="verdict hide" id="verdict"></p>
+  <div class="stats hide" id="chips">
+    <div class="stat days">
+      <span class="s-label">Schedule</span>
+      <b><span id="chipDays">—</span> <small>days faster</small></b>
+    </div>
+    <div class="stat frame">
+      <span class="s-label">Stick framing total</span>
+      <b id="chipFrame">—</b>
+    </div>
+    <div class="stat sip">
+      <span class="s-label">SIP total</span>
+      <b id="chipSip">—</b>
+    </div>
+  </div>
+  <div class="empty" id="emptyState">Fill in ZIP, square footage and basement above. The estimate appears instantly, no signup, nothing to submit.</div>
+</div>
+
+<section class="hide" id="chartSection">
+  <h2>Where the money goes <small>cost categories that differ by method</small></h2>
+  <div class="chart-box">
+    <div class="canvas-wrap"><canvas id="chart" role="img" aria-label="Stacked bar chart comparing framing and SIP costs by category"></canvas></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</section>
+
+<section class="hide" id="tableSection">
+  <h2>Line by line <small>every number shows its math</small></h2>
+  <div class="table-wrap">
+    <table id="lineTable">
+      <thead>
+        <tr><th>Item</th><th>Stick framing</th><th>SIPs</th><th>SIP advantage</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="sched" id="sched"></div>
+</section>
+
+<section class="hide" id="assumpSection">
+  <h2>Assumptions <small>every default is editable and sourced</small></h2>
+  <details class="assump" id="assumpDetails">
+    <summary>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Adjust assumptions
+      <span class="sum-hint">defaults from SIPA, NAHB, IBACOS</span>
+    </summary>
+    <div class="a-body" id="assumpBody"></div>
+  </details>
+</section>
+
+<section class="refine hide" id="refineSection">
+  <h2>Refine this estimate <small>the three inputs that matter most</small></h2>
+  <ol id="refineList"></ol>
+</section>
+
+<div class="disclaimer">
+  <b>Directional estimate only.</b> This tool models national and regional industry averages from the sources labeled on each assumption. Actual SIP package quotes, framing bids, labor rates, and lender carrying costs vary by supplier, design complexity, and market. Replace the defaults above with your real bid numbers before using this in a budget. This is not a quote and not a substitute for supplier pricing.
+</div>
+
+<footer>
+  <span>Structural Insulated Panel Association · sips.org</span>
+  <span class="fm" id="buildStamp">MODEL v1.0 · 2026</span>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ================= ZIP → market model ================= */
+const BASE_PSF = 195; // national avg retail $/sf, new single family, above grade
+const REGIONS = [
+  {name:"New England",            mult:1.14},
+  {name:"NY / NJ / PA",           mult:1.12},
+  {name:"Mid-Atlantic",           mult:1.00},
+  {name:"Southeast",              mult:0.94},
+  {name:"Ohio Valley / Great Lakes", mult:0.92},
+  {name:"Upper Midwest",          mult:0.95},
+  {name:"Plains / Illinois",      mult:0.93},
+  {name:"South Central",          mult:0.91},
+  {name:"Mountain West",          mult:1.06},
+  {name:"Pacific",                mult:1.28}
+];
+const ZIP3 = {
+  "100":1.55,"101":1.55,"102":1.55,"112":1.35,"021":1.40,"022":1.40,"024":1.35,
+  "200":1.35,"201":1.25,"220":1.25,"222":1.30,"300":1.00,"303":1.05,"331":1.15,"333":1.15,
+  "606":1.15,"607":1.10,"750":1.00,"752":1.00,"770":0.95,"787":1.10,
+  "802":1.15,"803":1.12,"850":1.05,"852":1.05,"890":1.05,"891":1.05,
+  "900":1.45,"902":1.45,"904":1.45,"913":1.40,"920":1.40,"921":1.40,
+  "940":1.60,"941":1.60,"944":1.55,"945":1.50,"950":1.50,"951":1.50,
+  "970":1.20,"972":1.20,"980":1.35,"981":1.35,"967":1.60,"968":1.60
+};
+function marketFromZip(zip){
+  const d = parseInt(zip[0],10);
+  const region = REGIONS[d];
+  const o = ZIP3[zip.slice(0,3)];
+  const mult = o || region.mult;
+  return { region: region.name, psf: Math.round(BASE_PSF*mult), metro: !!o };
+}
+
+/* ================= assumptions ================= */
+const A_DEF = {
+  retailPsf:   {v:null, label:"Local retail value, above grade", unit:"$/sf", src:"Auto from ZIP · Census + NAHB regional indices", group:"Market", step:1, auto:true},
+  constrShare: {v:64,   label:"Construction cost share of retail price", unit:"%", src:"NAHB Cost of Construction Survey", group:"Market", step:1},
+  belowGrade:  {v:66,   label:"Finished below-grade value vs above grade", unit:"%", src:"Appraisal convention", group:"Market", step:1},
+  unfinBase:   {v:25,   label:"Unfinished below-grade value vs above grade", unit:"%", src:"Model default · editable", group:"Market", step:1},
+  baseArea:    {v:50,   label:"Basement area vs above-grade sq ft", unit:"%", src:"Typical two-story footprint · editable", group:"Market", step:5},
+
+  framingShare:{v:9.1,  label:"Framing package share of retail price", unit:"%", src:"NAHB Cost of Construction Survey", group:"Structure", step:0.1},
+  envShare:    {v:65,   label:"Walls + roof share of framing package", unit:"%", src:"NAHB takeoff · editable", group:"Structure", step:1},
+  panelPrice:  {v:11.30,label:"SIP panel cost per sq ft of panel", unit:"$/sf", src:"SIPA 2023 Production Survey", group:"Structure", step:0.05},
+  panelFactor: {v:1.6,  label:"Panel area per sq ft of floor area", unit:"×", src:"Typical 2-story geometry, openings credited", group:"Structure", step:0.05},
+  laborShare:  {v:40,   label:"Labor share of framing package", unit:"%", src:"NAHB labor/material split", group:"Structure", step:1},
+  sipLabor:    {v:45,   label:"SIP install labor vs framing labor", unit:"%", src:"SIPA installer benchmark · editable", group:"Structure", step:1},
+
+  insulShare:  {v:2.0,  label:"Wall + roof insulation, share of construction", unit:"%", src:"NAHB Cost of Construction Survey", group:"Insulation & sealing", step:0.1},
+  airShare:    {v:0.5,  label:"Air sealing, share of construction", unit:"%", src:"Model default · editable", group:"Insulation & sealing", step:0.1},
+  sipAir:      {v:33,   label:"SIP air-sealing cost vs framing", unit:"%", src:"Cycle-time ratio, 1 vs 3 days", group:"Insulation & sealing", step:1},
+  drywallShare:{v:4.3,  label:"Drywall + finishes, share of construction", unit:"%", src:"NAHB Cost of Construction Survey", group:"Insulation & sealing", step:0.1},
+
+  carryDay:    {v:650,  label:"Carrying cost per construction day", unit:"$", src:"IBACOS · range $500 to $800", group:"Schedule", step:25},
+
+  trainF:      {v:0.30, label:"Training cost, framing, share of retail", unit:"%", src:"Industry benchmark", group:"Quality & waste", step:0.05},
+  trainS:      {v:0.15, label:"Training cost, SIPs, share of retail", unit:"%", src:"Industry benchmark", group:"Quality & waste", step:0.05},
+  callF:       {v:0.50, label:"Callback reserve, framing, share of retail", unit:"%", src:"NAHB warranty benchmark", group:"Quality & waste", step:0.05},
+  callS:       {v:0.25, label:"Callback reserve, SIPs, share of retail", unit:"%", src:"NAHB warranty benchmark", group:"Quality & waste", step:0.05},
+  dumpCost:    {v:500,  label:"Dumpster cost, each", unit:"$", src:"National average haul", group:"Quality & waste", step:25},
+  dumpF:       {v:2,    label:"Dumpsters per 1,000 sf, framing", unit:"", src:"Jobsite waste studies", group:"Quality & waste", step:1},
+  dumpS:       {v:1,    label:"Dumpsters per 1,000 sf, SIPs", unit:"", src:"Jobsite waste studies", group:"Quality & waste", step:1},
+
+  atticVal:    {v:50,   label:"Attic storage value", unit:"$/sf", src:"Regional storage comps", group:"Value gained", step:5},
+  atticSf:     {v:null, label:"Storage gained under SIP roof panels", unit:"sf", src:"Auto · 5% of floor area · editable", group:"Value gained", step:10, auto:true}
+};
+// cycle-time model, days per 3,000 sf conditioned
+const PHASES_DEF = [
+  {key:"walls", label:"Walls and roof",   f:12, s:5},
+  {key:"insul", label:"Wall insulation",  f:4,  s:0},
+  {key:"air",   label:"Air sealing",      f:3,  s:1},
+  {key:"dry",   label:"Drywall",          f:4,  s:2},
+  {key:"qc",    label:"QC and rework",    f:4,  s:1}
+];
+
+let A = {}; let PHASES = [];
+function resetAssumptions(){
+  A = {}; for (const k in A_DEF) A[k] = {...A_DEF[k], overridden:false};
+  PHASES = PHASES_DEF.map(p=>({...p}));
+}
+resetAssumptions();
+
+/* ================= calculation ================= */
+/*CALC-START*/
+function computeEstimate(inp, A, PHASES){
+  const g = k => A[k].v;
+  const sf = inp.sqft;
+  const psf = g("retailPsf");
+
+  // basement
+  const bArea = inp.basement === "none" ? 0 : sf * g("baseArea")/100;
+  const bMult = inp.basement === "finished" ? g("belowGrade")/100
+              : inp.basement === "unfinished" ? g("unfinBase")/100 : 0;
+  const retail = sf*psf + bArea*psf*bMult;
+  const constr = retail * g("constrShare")/100;
+
+  // structure
+  const framingPkg = retail * g("framingShare")/100;
+  const envF   = framingPkg * g("envShare")/100;        // walls+roof, framing
+  const balance= framingPkg - envF;                     // floors + interior, both methods
+  const panelSf= sf * g("panelFactor");
+  const panels = panelSf * g("panelPrice");
+  const installS = envF * (g("laborShare")/100) * (g("sipLabor")/100);
+
+  // envelope trades
+  const insulF = constr * g("insulShare")/100, insulS = 0;
+  const airF   = constr * g("airShare")/100;
+  const airS   = airF * g("sipAir")/100;
+  const drywall= constr * g("drywallShare")/100;
+
+  // schedule
+  const condSf = sf + (inp.basement === "finished" ? bArea : 0);
+  const scale  = condSf/3000;
+  const daysF  = PHASES.reduce((t,p)=>t+p.f,0) * scale;
+  const daysS  = PHASES.reduce((t,p)=>t+p.s,0) * scale;
+  const carryF = daysF * g("carryDay");
+  const carryS = daysS * g("carryDay");
+
+  // quality + waste
+  const trainF = retail * g("trainF")/100, trainS = retail * g("trainS")/100;
+  const callF  = retail * g("callF")/100,  callS  = retail * g("callS")/100;
+  const nDumpF = Math.ceil(condSf/1000 * g("dumpF"));
+  const nDumpS = Math.ceil(condSf/1000 * g("dumpS"));
+  const dumpFc = nDumpF * g("dumpCost");
+  const dumpSc = nDumpS * g("dumpCost");
+
+  // value gained
+  const atticSf  = g("atticSf");
+  const atticVal = atticSf * g("atticVal");
+
+  const totalF = envF + balance + insulF + airF + drywall + trainF + callF + dumpFc + carryF;
+  const totalS = panels + installS + balance + insulS + airS + drywall + trainS + callS + dumpSc + carryS;
+  const costSavings = totalF - totalS;
+  const savings = costSavings + atticVal;
+
+  return {
+    psf, retail, constr, framingPkg, envF, balance, panelSf, panels, installS,
+    insulF, insulS, airF, airS, drywall,
+    condSf, scale, daysF, daysS, daysSaved: daysF-daysS, carryF, carryS,
+    trainF, trainS, callF, callS, nDumpF, nDumpS, dumpFc, dumpSc,
+    atticSf, atticVal, bArea,
+    totalF, totalS, costSavings, savings
+  };
+}
+/*CALC-END*/
+
+/* ================= formatting ================= */
+const fUSD  = new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
+const fNum  = new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
+const $$ = n => fUSD.format(Math.round(n));
+const nn = n => fNum.format(Math.round(n));
+const d1 = n => (Math.round(n*10)/10).toLocaleString("en-US");
+
+/* ================= DOM ================= */
+const el = id => document.getElementById(id);
+const zipEl = el("zip"), sqftEl = el("sqft"), baseEl = el("basement");
+let chart = null, lastSavings = null;
+
+function readInputs(){
+  const zip = (zipEl.value||"").trim();
+  const sqft = parseFloat((sqftEl.value||"").replace(/[^0-9.]/g,""));
+  if (!/^\d{5}$/.test(zip) || !(sqft>=400 && sqft<=20000)) return null;
+  return { zip, sqft, basement: baseEl.value };
+}
+
+function syncAutoAssumptions(inp){
+  if (!A.retailPsf.overridden){
+    const m = marketFromZip(inp.zip);
+    A.retailPsf.v = m.psf;
+    el("regionNote").innerHTML =
+      `Market: <b>${m.region}${m.metro ? " · metro" : ""}</b> · modeled retail <b>$${m.psf}/sf</b> above grade · editable under Assumptions`;
+  }
+  if (!A.atticSf.overridden){
+    A.atticSf.v = Math.round(inp.sqft*0.05);
+  }
+  refreshAssumptionFields();
+}
+
+/* ================= render ================= */
+function animateNumber(node, from, to){
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || from === null || Math.abs(to-from) < 1){ node.textContent = $$(to); return; }
+  const t0 = performance.now(), dur = 480;
+  function tick(t){
+    const p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,4);
+    node.textContent = $$(from + (to-from)*e);
+    if (p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function render(){
+  const inp = readInputs();
+  if (!inp){
+    el("emptyState").classList.remove("hide");
+    el("chips").classList.add("hide");
+    el("verdict").classList.add("hide");
+    el("headline").innerHTML = '<span class="dim">$ —</span>';
+    ["chartSection","tableSection","assumpSection","refineSection"].forEach(id=>el(id).classList.add("hide"));
+    lastSavings = null;
+    return;
+  }
+  syncAutoAssumptions(inp);
+  const r = computeEstimate(inp, A, PHASES);
+
+  // headline
+  el("emptyState").classList.add("hide");
+  const h = el("headline");
+  h.classList.toggle("negative", r.savings < 0);
+  animateNumber(h, lastSavings, r.savings);
+  lastSavings = r.savings;
+
+  const v = el("verdict");
+  v.classList.remove("hide");
+  v.textContent = r.savings >= 0
+    ? `Total delivered cost including schedule, waste, callbacks, and ${nn(r.atticSf)} sf of attic storage the SIP roof creates.`
+    : `In this market the SIP shell premium outweighs the schedule and quality savings at default assumptions. Enter a real panel quote below, package pricing varies widely.`;
+
+  el("chips").classList.remove("hide");
+  el("chipDays").textContent = d1(r.daysSaved);
+  el("chipFrame").textContent = $$(r.totalF);
+  el("chipSip").textContent = $$(r.totalS);
+
+  ["chartSection","tableSection","assumpSection","refineSection"].forEach(id=>{
+    const s = el(id);
+    if (s.classList.contains("hide")){ s.classList.remove("hide"); s.classList.add("reveal"); }
+  });
+
+  renderChart(r);
+  renderTable(r, inp);
+  renderSched(r);
+  renderRefine(r, inp);
+}
+
+/* ---------- chart ---------- */
+const CATS = ["Structure","Insulation","Air sealing","Finishes","Quality & rework","Carrying cost"];
+const GRAY = ["#22262B","#565D68","#8A919C","#B4BAC3","#D3D7DD","#E8EAEE"];
+const REDS = ["#8F1B24","#B9212D","#D25059","#E4868C","#F1B9BD","#F9DFE1"];
+
+function chartData(r){
+  return [
+    [r.envF + r.balance + r.dumpFc,           r.panels + r.installS + r.balance + r.dumpSc],
+    [r.insulF,                                 r.insulS],
+    [r.airF,                                   r.airS],
+    [r.drywall,                                r.drywall],
+    [r.trainF + r.callF,                       r.trainS + r.callS],
+    [r.carryF,                                 r.carryS]
+  ];
+}
+function renderChart(r){
+  const data = chartData(r);
+  const datasets = CATS.map((c,i)=>({
+    label:c,
+    data:data[i],
+    backgroundColor:[GRAY[i],REDS[i]],
+    borderColor:"#FBFBFC", borderWidth:1.5,
+    borderRadius: i===CATS.length-1 ? 4 : 0, borderSkipped:false
+  }));
+  const cfg = {
+    type:"bar",
+    data:{ labels:["Stick framing","SIPs"], datasets },
+    options:{
+      indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      animation: matchMedia("(prefers-reduced-motion: reduce)").matches ? false : {duration:400,easing:"easeOutQuart"},
+      scales:{
+        x:{ stacked:true, grid:{color:"#EFF0F3"}, border:{display:false},
+            ticks:{ font:{family:"ui-monospace,Menlo,monospace",size:10}, color:"#5F6570",
+                    callback:v=>"$"+(v/1000)+"k" } },
+        y:{ stacked:true, grid:{display:false}, border:{display:false},
+            ticks:{ font:{size:12,weight:600}, color:"#1B1E23" } }
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#1B1E23", cornerRadius:8, padding:10, titleFont:{size:12}, bodyFont:{size:12},
+          callbacks:{ label:c=>` ${c.dataset.label}: ${$$(c.parsed.x)}` }
+        }
+      }
+    }
+  };
+  if (chart){ chart.data = cfg.data; chart.update(); }
+  else {
+    chart = new Chart(el("chart"), cfg);
+    el("legend").innerHTML = CATS.map((c,i)=>
+      `<span><i style="--sw:${GRAY[i]}"></i><i style="--sw:${REDS[i]}"></i>${c}</span>`).join("");
+  }
+}
+
+/* ---------- table ---------- */
+function row(item, math, src, f, s, opts={}){
+  const cls = opts.cls || "";
+  const eq = opts.eq;
+  const delta = (f===null||s===null) ? null : f - s;
+  const dTxt = delta===null ? "—" : (Math.abs(delta)<1 ? "even" : (delta>0? "+" : "−") + $$(Math.abs(delta)).slice(0));
+  const dCls = delta===null||Math.abs(delta)<1 ? "" : (delta>0 ? "delta-pos" : "delta-neg");
+  return `<tr class="${cls}">
+    <td><span class="item">${item}</span>${math?`<span class="math">${math}</span>`:""}${src?`<span class="src">${src}</span>`:""}</td>
+    <td>${f===null?"—":$$(f)}</td>
+    <td>${s===null?"—":(eq?$$(s):$$(s))}</td>
+    <td class="${dCls}">${dTxt}</td>
+  </tr>`;
+}
+function renderTable(r, inp){
+  const g = k => A[k].v;
+  const rows = [];
+  const basisMath = inp.basement==="none"
+    ? `${nn(inp.sqft)} sf × $${nn(r.psf)}/sf = ${$$(r.retail)} retail basis`
+    : `${nn(inp.sqft)} sf × $${nn(r.psf)}/sf + ${nn(r.bArea)} sf basement × $${nn(r.psf)} × ${inp.basement==="finished"?g("belowGrade"):g("unfinBase")}% = ${$$(r.retail)} retail basis`;
+
+  rows.push(row("Walls + roof structure",
+    `Framing: ${$$(r.retail)} retail × ${g("framingShare")}% × ${g("envShare")}% · SIPs: ${nn(r.panelSf)} sf panel × $${g("panelPrice")}/sf + ${$$(r.installS)} install labor`,
+    "NAHB · SIPA 2023 Production Survey", r.envF, r.panels + r.installS));
+  rows.push(row("Floors + interior framing",
+    `Same both methods: framing package × ${100-g("envShare")}%`,
+    "NAHB", r.balance, r.balance));
+  rows.push(row("Wall + roof insulation",
+    `Framing: ${$$(r.constr)} construction × ${g("insulShare")}% · SIPs: included in panel`,
+    "NAHB", r.insulF, r.insulS));
+  rows.push(row("Air sealing",
+    `Framing: construction × ${g("airShare")}% · SIPs: ${g("sipAir")}% of framing cost`,
+    "Cycle-time ratio", r.airF, r.airS));
+  rows.push(row("Drywall + finishes",
+    `Both: construction × ${g("drywallShare")}% · schedule differs, cost equal`,
+    "NAHB", r.drywall, r.drywall, {eq:true}));
+  rows.push(row("Electrical, HVAC, plumbing",
+    `Assumed cost neutral between methods`,
+    "Assumption", null, null));
+  rows.push(row("Crew training",
+    `Retail × ${g("trainF")}% vs × ${g("trainS")}%`,
+    "Industry benchmark", r.trainF, r.trainS));
+  rows.push(row("Callback reserve",
+    `Retail × ${g("callF")}% vs × ${g("callS")}%`,
+    "NAHB warranty benchmark", r.callF, r.callS));
+  rows.push(row("Jobsite waste",
+    `${r.nDumpF} vs ${r.nDumpS} dumpsters × $${nn(g("dumpCost"))}`,
+    "Jobsite waste studies", r.dumpFc, r.dumpSc));
+  rows.push(row("Construction carrying cost",
+    `${d1(r.daysF)} vs ${d1(r.daysS)} days × $${nn(g("carryDay"))}/day`,
+    "IBACOS", r.carryF, r.carryS));
+  rows.push(row("Total delivered cost", basisMath, "", r.totalF, r.totalS, {cls:"total"}));
+  rows.push(row("Attic storage created by SIP roof",
+    `${nn(r.atticSf)} sf × $${nn(g("atticVal"))}/sf, value gained, credited to SIPs`,
+    "Regional storage comps", 0, -r.atticVal, {cls:"credit"}));
+  rows.push(`<tr class="grand">
+    <td><span class="item">Estimated savings with SIPs</span></td>
+    <td></td><td></td>
+    <td class="${r.savings>=0?"delta-pos":"delta-neg"}">${r.savings>=0?"+":"−"}${$$(Math.abs(r.savings))}</td>
+  </tr>`);
+  el("tbody").innerHTML = rows.join("");
+}
+function renderSched(r){
+  const s = PHASES.map(p=>
+    `${p.label}: <b>${d1(p.f*r.scale)}</b> vs <b>${d1(p.s*r.scale)}</b> days`).join(" · ");
+  el("sched").innerHTML =
+    `SCHEDULE, scaled from days per 3,000 sf → ${nn(r.condSf)} sf conditioned: ${s} · total <b>${d1(r.daysF)}</b> vs <b>${d1(r.daysS)}</b> days, <b>${d1(r.daysSaved)}</b> saved`;
+}
+
+/* ---------- refine ---------- */
+function renderRefine(r){
+  el("refineList").innerHTML = `
+  <li><b>Your actual SIP package quote.</b>
+    <p>The model prices ${nn(r.panelSf)} sf of panel at $${A.panelPrice.v}/sf = ${$$(r.panels)}, the single largest SIP-side number. A real quote replaces the biggest uncertainty in this estimate.</p>
+    <span class="where">→ Assumptions · Structure · SIP panel cost, or adjust panel area factor</span></li>
+  <li><b>Your framing bid for walls and roof.</b>
+    <p>The framing side derives ${$$(r.envF)} from retail-price ratios. A hard bid from your framer pins the other half of the comparison.</p>
+    <span class="where">→ Assumptions · Structure · framing package share and walls + roof share</span></li>
+  <li><b>Your local retail $/sf and carrying cost.</b>
+    <p>Currently $${nn(r.psf)}/sf from ZIP and $${nn(A.carryDay.v)}/day carrying. These scale nearly every line; your appraiser and your lender know the real numbers.</p>
+    <span class="where">→ Assumptions · Market and Schedule</span></li>`;
+}
+
+/* ---------- assumptions panel ---------- */
+function buildAssumptions(){
+  const groups = {};
+  for (const k in A){ (groups[A[k].group] ||= []).push(k); }
+  let html = "";
+  for (const gname in groups){
+    html += `<div class="a-group"><h3>${gname}</h3>`;
+    for (const k of groups[gname]){
+      const a = A[k];
+      html += `<div class="a-row">
+        <div class="a-label">${a.label}<span class="a-src">${a.src}</span></div>
+        <div class="a-in">
+          ${a.auto?`<button class="autotag" data-reset="${k}" title="Return to automatic value">auto</button>`:""}
+          <input type="number" step="${a.step}" data-k="${k}" value="${a.v ?? ""}" inputmode="decimal" aria-label="${a.label}">
+          <span class="unit">${a.unit}</span>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  // cycle-time grid
+  html += `<div class="a-group"><h3>Cycle time, days per 3,000 sf</h3>
+    <div class="cycle-grid">
+      <span></span><span class="cg-h">FRAMING</span><span class="cg-h">SIPS</span>
+      ${PHASES.map((p,i)=>`
+        <span class="cg-l">${p.label}</span>
+        <input type="number" step="0.5" min="0" data-ph="${i}" data-side="f" value="${p.f}" aria-label="${p.label} framing days">
+        <input type="number" step="0.5" min="0" data-ph="${i}" data-side="s" value="${p.s}" aria-label="${p.label} SIP days">`).join("")}
+    </div>
+    <div class="a-src" style="font-family:var(--mono);font-size:10px;color:var(--ink-3);padding-top:8px">Builder cycle-time benchmarks · scaled linearly to your square footage</div>
+  </div>
+  <div class="reset-row"><button type="button" id="resetAll">Reset all assumptions to defaults</button></div>`;
+  el("assumpBody").innerHTML = html;
+
+  el("assumpBody").addEventListener("input", e=>{
+    const t = e.target;
+    if (t.dataset.k){
+      const val = parseFloat(t.value);
+      if (isFinite(val) && val >= 0){ A[t.dataset.k].v = val; if (A[t.dataset.k].auto) A[t.dataset.k].overridden = true; render(); }
+    } else if (t.dataset.ph !== undefined){
+      const val = parseFloat(t.value);
+      if (isFinite(val) && val >= 0){ PHASES[+t.dataset.ph][t.dataset.side] = val; render(); }
+    }
+  });
+  el("assumpBody").addEventListener("click", e=>{
+    const rk = e.target.dataset && e.target.dataset.reset;
+    if (rk){ A[rk].overridden = false; render(); }
+    if (e.target.id === "resetAll"){ resetAssumptions(); buildAssumptions(); render(); }
+  });
+}
+function refreshAssumptionFields(){
+  document.querySelectorAll('#assumpBody input[data-k]').forEach(i=>{
+    if (document.activeElement !== i) i.value = A[i.dataset.k].v ?? "";
+  });
+}
+
+/* ================= boot ================= */
+buildAssumptions();
+[zipEl, sqftEl].forEach(i=>i.addEventListener("input", render));
+baseEl.addEventListener("change", render);
+zipEl.addEventListener("input", ()=>{ zipEl.value = zipEl.value.replace(/\D/g,"").slice(0,5); });
+</script>
+</body>
+</html>
