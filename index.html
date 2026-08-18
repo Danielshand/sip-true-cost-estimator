@@ -6,22 +6,34 @@
 <title>SIP True Cost Estimator · SIPA</title>
 <meta name="description" content="Compare the total delivered cost of building with structural insulated panels against conventional stick framing.">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#FBFBFC;
-  --surface:#FFFFFF;
-  --ink:#1B1E23;
-  --ink-2:#454B55;
-  --ink-3:#5F6570;
-  --line:#E5E7EA;
-  --line-soft:#EFF0F3;
+  /* SIPA brand, sampled from sips.org stylesheet */
   --red:#B9212D;
-  --red-ink:#9E1C27;
+  --red-hover:#C92C35;
   --red-soft:#FBF0F1;
-  --green-ink:#1D6B45;
+  --red-line:#F0D5D8;
+  --green:#60AA3A;
+  --green-ink:#3A7522;
+  --green-soft:#F0F7EC;
+  --green-line:#DBEBD2;
+  --gold:#ECD13C;
+  --ink:#222529;
+  --ink-2:#4A4F57;
+  --ink-3:#6D6A69;
+
+  --bg:#FAFAFA;
+  --surface:#FFFFFF;
+  --line:#E4E5E8;
+  --line-soft:#EFEFF1;
+
+  --display:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --sans:"Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --r-sm:6px; --r-md:10px; --r-lg:14px;
   --z-sticky:10;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -31,15 +43,18 @@ body{
   background:var(--bg);
   color:var(--ink);
   font-size:15px;
-  line-height:1.55;
+  line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
+h1,h2,h3,.headline,.stat b,.chip b{font-family:var(--display)}
 body::before{
   content:"";position:fixed;top:0;left:0;right:0;height:3px;
-  background:var(--red);z-index:var(--z-sticky);
+  background:linear-gradient(90deg,var(--red) 0 62%,var(--green) 62% 88%,var(--gold) 88% 100%);
+  z-index:var(--z-sticky);
 }
 .wrap{max-width:740px;margin:0 auto;padding:3px 20px calc(48px + env(safe-area-inset-bottom))}
-a{color:var(--red-ink)}
+a{color:var(--red)}
+a:hover{color:var(--red-hover)}
 
 /* ---------- header ---------- */
 header{
@@ -48,24 +63,29 @@ header{
   border-bottom:1px solid var(--line);
 }
 .mark{
-  width:34px;height:34px;border-radius:9px;background:var(--red);
+  width:36px;height:36px;border-radius:7px;background:var(--red);
   display:grid;place-items:center;flex:none;
 }
 .mark svg{display:block}
-.brand{display:flex;flex-direction:column;gap:1px}
-.brand b{font-size:15px;letter-spacing:-0.01em;font-weight:650}
-.brand span{font-size:12.5px;color:var(--ink-3)}
+.brand{display:flex;flex-direction:column;gap:0}
+.brand b{
+  font-family:var(--display);font-size:16px;font-weight:700;
+  letter-spacing:.02em;line-height:1.2;
+}
+.brand span{font-size:12px;color:var(--ink-3);line-height:1.35}
 header .tag{
-  margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);
-  border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap;
+  margin-left:auto;font-family:var(--display);font-size:10.5px;font-weight:600;
+  letter-spacing:.09em;color:var(--red);text-transform:uppercase;
+  border:1px solid var(--red-line);background:var(--red-soft);
+  border-radius:4px;padding:5px 10px;white-space:nowrap;
 }
 @media (max-width:520px){header .tag{display:none}}
 
 /* ---------- intro ---------- */
 .intro{padding:26px 0 6px}
 .intro h1{
-  font-size:clamp(1.55rem,5.4vw,2.05rem);
-  letter-spacing:-0.025em;line-height:1.15;font-weight:700;
+  font-size:clamp(1.6rem,5.4vw,2.15rem);
+  letter-spacing:-0.02em;line-height:1.18;font-weight:600;
   text-wrap:balance;max-width:24ch;
 }
 .intro p{margin-top:9px;color:var(--ink-2);max-width:56ch}
@@ -83,7 +103,7 @@ header .tag{
 }
 @media (min-width:560px){.inputs{grid-template-columns:0.8fr 1.1fr 1fr;gap:12px}}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:13px;font-weight:600;letter-spacing:-0.005em}
+.field label{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:0}
 .field .hint{font-weight:400;color:var(--ink-3)}
 .field input,.field select{
   font:inherit;font-size:16px;
@@ -102,7 +122,7 @@ header .tag{
   outline:none;border-color:var(--red);
   box-shadow:0 0 0 3px rgba(185,33,45,.14);
 }
-.field input::placeholder{color:#8A909B}
+.field input::placeholder{color:#6D6A69;opacity:1}
 .region-note{
   grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
   min-height:1em;
@@ -112,19 +132,20 @@ header .tag{
 /* ---------- result ---------- */
 .result{margin-top:28px}
 .result .label{
-  font-size:13px;font-weight:600;color:var(--ink-2);
-  display:flex;align-items:center;gap:8px;
+  font-family:var(--display);font-size:11px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  display:flex;align-items:center;gap:9px;
 }
 .result .label::before{
-  content:"";width:8px;height:8px;border-radius:2px;background:var(--red);flex:none;
+  content:"";width:18px;height:3px;border-radius:2px;background:var(--red);flex:none;
 }
 .headline{
-  font-size:clamp(2.7rem,11vw,4.4rem);
-  font-weight:750;letter-spacing:-0.035em;line-height:1.02;
+  font-size:clamp(2.7rem,11vw,4.3rem);
+  font-weight:700;letter-spacing:-0.035em;line-height:1.05;
   font-variant-numeric:tabular-nums;
-  margin-top:6px;
+  margin-top:8px;color:var(--green-ink);
 }
-.headline.negative{color:var(--red-ink)}
+.headline.negative{color:var(--red)}
 .headline .dim{color:#C6CAD1}
 .result .verdict{margin-top:6px;color:var(--ink-2);max-width:58ch}
 .stats{
@@ -138,18 +159,21 @@ header .tag{
   transition:transform .18s cubic-bezier(.19,1,.22,1),box-shadow .18s ease;
 }
 .stat:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(27,30,35,.06)}
-.stat .s-label{font-size:11.5px;font-weight:600;letter-spacing:.015em}
+.stat .s-label{
+  font-family:var(--display);font-size:10px;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase;
+}
 .stat b{
   font-size:19px;font-weight:700;letter-spacing:-0.02em;
   font-variant-numeric:tabular-nums;line-height:1.25;
 }
 .stat b small{font-size:12.5px;font-weight:600;letter-spacing:0}
-.stat.days{background:var(--red-soft);border-color:#F1D6D9}
-.stat.days .s-label,.stat.days b{color:var(--red-ink)}
-.stat.frame{background:#F2F3F5;border-color:#E3E5E9}
+.stat.days{background:var(--red-soft);border-color:var(--red-line)}
+.stat.days .s-label,.stat.days b{color:var(--red)}
+.stat.frame{background:#F1F1F2;border-color:#E2E2E5}
 .stat.frame .s-label{color:var(--ink-3)}
 .stat.frame b{color:var(--ink)}
-.stat.sip{background:#EDF6F1;border-color:#D6E9DF}
+.stat.sip{background:var(--green-soft);border-color:var(--green-line)}
 .stat.sip .s-label,.stat.sip b{color:var(--green-ink)}
 .empty{
   margin-top:10px;color:var(--ink-3);font-size:14px;
@@ -160,11 +184,14 @@ header .tag{
 /* ---------- sections ---------- */
 section{margin-top:38px}
 section>h2{
-  font-size:16px;font-weight:650;letter-spacing:-0.015em;
-  padding-bottom:10px;border-bottom:1px solid var(--line);
+  font-size:15px;font-weight:600;letter-spacing:-0.005em;
+  padding-bottom:10px;border-bottom:2px solid var(--ink);
   display:flex;align-items:baseline;gap:10px;
 }
-section>h2 small{font-size:12.5px;font-weight:400;color:var(--ink-3);margin-left:auto;text-align:right}
+section>h2 small{
+  font-family:var(--sans);font-size:12px;font-weight:400;
+  color:var(--ink-3);margin-left:auto;text-align:right;
+}
 .hide{display:none !important}
 
 /* ---------- chart ---------- */
@@ -183,8 +210,9 @@ section>h2 small{font-size:12.5px;font-weight:400;color:var(--ink-3);margin-left
 .table-wrap{overflow-x:auto;margin-top:4px;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;width:100%;min-width:620px;font-size:13.5px}
 thead th{
-  text-align:right;font-weight:600;color:var(--ink-2);font-size:12px;
-  padding:12px 10px 8px;border-bottom:1px solid var(--line);white-space:nowrap;
+  text-align:right;font-family:var(--display);font-weight:600;
+  color:var(--ink-3);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  padding:14px 10px 9px;border-bottom:1px solid var(--line);white-space:nowrap;
 }
 thead th:first-child{text-align:left;padding-left:2px}
 tbody tr{transition:background .12s ease}
@@ -200,18 +228,19 @@ td .math{
   margin-top:3px;line-height:1.5;white-space:normal;
 }
 td .src{
-  display:inline-block;font-family:var(--mono);font-size:10px;color:var(--red-ink);
-  background:var(--red-soft);border-radius:4px;padding:1px 6px;margin-top:4px;
+  display:inline-block;font-family:var(--mono);font-size:10px;color:var(--red);
+  background:var(--red-soft);border-radius:3px;padding:1px 6px;margin-top:4px;
 }
-td.delta-pos{color:var(--green-ink);font-weight:600}
-td.delta-neg{color:var(--red-ink);font-weight:600}
+td.delta-pos{color:var(--green-ink);font-weight:700}
+td.delta-neg{color:var(--red);font-weight:700}
+tr.credit td{background:#FEFBEC}
+tr.credit td .src{color:#8A6D07;background:#FBF3D2}
 tr.total td{
   border-top:1.5px solid var(--ink);border-bottom:none;
   font-weight:700;font-size:14.5px;padding-top:12px;
 }
 tr.credit td{color:var(--ink-2)}
-tr.grand td{font-weight:750;font-size:15px;border-bottom:none;padding-top:4px}
-tr.grand td:first-child{color:var(--red-ink)}
+tr.grand td{font-family:var(--display);font-weight:700;font-size:15px;border-bottom:none;padding-top:6px}
 .sched{
   margin-top:14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
   line-height:1.9;
@@ -226,7 +255,7 @@ details.assump{
 details.assump summary{
   list-style:none;cursor:pointer;user-select:none;
   display:flex;align-items:center;gap:10px;
-  padding:15px 18px;font-weight:600;font-size:14px;
+  padding:15px 18px;font-family:var(--display);font-weight:600;font-size:13.5px;
 }
 details.assump summary::-webkit-details-marker{display:none}
 details.assump summary:hover{background:#F7F8F9}
@@ -237,7 +266,8 @@ details.assump[open] summary{border-bottom:1px solid var(--line)}
 .a-body{padding:6px 18px 20px}
 .a-group{padding-top:16px}
 .a-group h3{
-  font-size:12px;font-weight:650;color:var(--ink-2);
+  font-family:var(--display);font-size:10px;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--red);
   padding-bottom:8px;margin-bottom:2px;
 }
 .a-row{
@@ -256,7 +286,7 @@ details.assump[open] summary{border-bottom:1px solid var(--line)}
 .a-row input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(185,33,45,.12)}
 .a-row .unit{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:30px}
 .a-row .autotag{
-  font-family:var(--mono);font-size:9.5px;color:var(--red-ink);cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;color:var(--red);cursor:pointer;
   background:none;border:none;text-decoration:underline;padding:0;
 }
 .cycle-grid{display:grid;grid-template-columns:1fr 74px 74px;gap:4px 10px;align-items:center;padding-top:4px}
@@ -283,13 +313,13 @@ details.assump[open] summary{border-bottom:1px solid var(--line)}
 }
 .refine li::before{
   content:counter(r);position:absolute;left:0;top:14px;
-  width:24px;height:24px;border-radius:7px;
-  background:var(--ink);color:#fff;font-size:12px;font-weight:650;
+  width:24px;height:24px;border-radius:5px;
+  background:var(--ink);color:#fff;font-family:var(--display);font-size:12px;font-weight:600;
   display:grid;place-items:center;font-variant-numeric:tabular-nums;
 }
-.refine li b{font-weight:650}
+.refine li b{font-family:var(--display);font-weight:600}
 .refine li p{color:var(--ink-2);font-size:13.5px;margin-top:2px}
-.refine li .where{font-family:var(--mono);font-size:11px;color:var(--red-ink);margin-top:3px;display:block}
+.refine li .where{font-family:var(--mono);font-size:11px;color:var(--red);margin-top:3px;display:block}
 
 /* ---------- disclaimer / footer ---------- */
 .disclaimer{
@@ -318,17 +348,17 @@ footer .fm{font-family:var(--mono);font-size:10.5px}
 
 <header>
   <div class="mark" aria-hidden="true">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M2 8.2 9 3l7 5.2" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M4.2 9.8V15h9.6V9.8" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M7.2 15v-3.4h3.6V15" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M3 7.4 10 3.2l7 4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="4.4" y="9.4" width="11.2" height="7.2" rx="1" stroke="#fff" stroke-width="1.5"/>
+      <path d="M4.4 11.9h11.2M4.4 14.1h11.2" stroke="#fff" stroke-width="1.1" opacity=".72"/>
     </svg>
   </div>
   <div class="brand">
     <b>SIPA</b>
     <span>Structural Insulated Panel Association</span>
   </div>
-  <span class="tag">TRUE COST ESTIMATOR</span>
+  <span class="tag">True Cost Estimator</span>
 </header>
 
 <div class="intro">
@@ -663,8 +693,8 @@ function render(){
 
 /* ---------- chart ---------- */
 const CATS = ["Structure","Insulation","Air sealing","Finishes","Quality & rework","Carrying cost"];
-const GRAY = ["#22262B","#565D68","#8A919C","#B4BAC3","#D3D7DD","#E8EAEE"];
-const REDS = ["#8F1B24","#B9212D","#D25059","#E4868C","#F1B9BD","#F9DFE1"];
+const GRAY = ["#222529","#4A4F57","#7C7F86","#A8ABB1","#CBCDD1","#E6E7E9"];
+const REDS = ["#2E5C19","#3F7F26","#60AA3A","#8CC46E","#B8DDA4","#DCEFD1"];
 
 function chartData(r){
   return [
@@ -682,7 +712,7 @@ function renderChart(r){
     label:c,
     data:data[i],
     backgroundColor:[GRAY[i],REDS[i]],
-    borderColor:"#FBFBFC", borderWidth:1.5,
+    borderColor:"#FAFAFA", borderWidth:1.5,
     borderRadius: i===CATS.length-1 ? 4 : 0, borderSkipped:false
   }));
   const cfg = {
@@ -692,16 +722,17 @@ function renderChart(r){
       indexAxis:"y", responsive:true, maintainAspectRatio:false,
       animation: matchMedia("(prefers-reduced-motion: reduce)").matches ? false : {duration:400,easing:"easeOutQuart"},
       scales:{
-        x:{ stacked:true, grid:{color:"#EFF0F3"}, border:{display:false},
-            ticks:{ font:{family:"ui-monospace,Menlo,monospace",size:10}, color:"#5F6570",
+        x:{ stacked:true, grid:{color:"#EFEFF1"}, border:{display:false},
+            ticks:{ font:{family:"ui-monospace,Menlo,monospace",size:10}, color:"#6D6A69",
                     callback:v=>"$"+(v/1000)+"k" } },
         y:{ stacked:true, grid:{display:false}, border:{display:false},
-            ticks:{ font:{size:12,weight:600}, color:"#1B1E23" } }
+            ticks:{ font:{family:"Poppins,sans-serif",size:12,weight:600}, color:"#222529" } }
       },
       plugins:{
         legend:{display:false},
         tooltip:{
-          backgroundColor:"#1B1E23", cornerRadius:8, padding:10, titleFont:{size:12}, bodyFont:{size:12},
+          backgroundColor:"#222529", cornerRadius:6, padding:10,
+          titleFont:{family:"Poppins,sans-serif",size:12}, bodyFont:{size:12},
           callbacks:{ label:c=>` ${c.dataset.label}: ${$$(c.parsed.x)}` }
         }
       }
