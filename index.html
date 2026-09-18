@@ -206,6 +206,53 @@ section>h2 small{
   vertical-align:-1px;background:var(--sw,#999);
 }
 
+/* ---------- energy crossover ---------- */
+.seg-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.seg{
+  display:inline-flex;background:var(--bg);border:1px solid var(--line);
+  border-radius:9px;padding:3px;gap:2px;
+}
+.seg button{
+  font-family:var(--display);font-size:12px;font-weight:600;
+  border:none;background:none;color:var(--ink-3);
+  padding:7px 13px;border-radius:6px;cursor:pointer;min-height:36px;
+  transition:background .16s ease,color .16s ease;
+}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{
+  background:var(--surface);color:var(--ink);
+  box-shadow:0 1px 2px rgba(34,37,41,.1);
+}
+.seg-note{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+
+.xo-wrap{position:relative;height:300px;margin-top:18px}
+@media (max-width:560px){.xo-wrap{height:250px}}
+
+.milestones{
+  display:grid;gap:1px;margin-top:18px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;
+  grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+}
+.ms{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.ms .ms-k{
+  font-family:var(--display);font-size:9.5px;font-weight:600;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+}
+.ms .ms-v{
+  font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:-0.02em;
+  font-variant-numeric:tabular-nums;color:var(--green-ink);
+}
+.ms.be .ms-v{color:var(--red)}
+.ms .ms-s{font-size:11px;color:var(--ink-3);line-height:1.35}
+
+.band-key{
+  display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;
+  font-size:11.5px;color:var(--ink-2);
+}
+.band-key span{display:inline-flex;align-items:center;gap:6px}
+.band-key i{width:14px;height:3px;border-radius:2px;background:var(--bk,#999);flex:none}
+.band-key i.sw{height:11px;border-radius:3px}
+
 /* ---------- table ---------- */
 .table-wrap{overflow-x:auto;margin-top:4px;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;width:100%;min-width:620px;font-size:13.5px}
@@ -428,6 +475,30 @@ footer .fm{font-family:var(--mono);font-size:10.5px}
   <div class="sched" id="sched"></div>
 </section>
 
+<section class="hide" id="energySection">
+  <h2>The 30-year picture <small>first cost plus every utility bill after</small></h2>
+
+  <div class="seg-row">
+    <div class="seg" id="fuelSeg" role="group" aria-label="Heating fuel">
+      <button type="button" data-fuel="mix" aria-pressed="true">US mix</button>
+      <button type="button" data-fuel="elec" aria-pressed="false">All-electric</button>
+      <button type="button" data-fuel="gas" aria-pressed="false">Gas heat</button>
+    </div>
+    <span class="seg-note" id="fuelNote"></span>
+  </div>
+
+  <div class="xo-wrap"><canvas id="xoChart" role="img" aria-label="Cumulative dollars ahead with SIPs over 30 years"></canvas></div>
+
+  <div class="band-key">
+    <span><i style="--bk:#3A7522"></i>Expected, 3.5%/yr</span>
+    <span><i class="sw" style="--bk:rgba(96,170,58,.22)"></i>Range, 2.4% to 7.0%/yr</span>
+    <span><i style="--bk:#222529"></i>Break-even line</span>
+  </div>
+
+  <div class="milestones" id="milestones"></div>
+  <div class="sched" id="energyMath"></div>
+</section>
+
 <section class="hide" id="assumpSection">
   <h2>Assumptions <small>every default is editable and sourced</small></h2>
   <details class="assump" id="assumpDetails">
@@ -447,6 +518,8 @@ footer .fm{font-family:var(--mono);font-size:10.5px}
 
 <div class="disclaimer">
   <b>Directional estimate only.</b> This tool models national and regional industry averages from the sources labeled on each assumption. Actual SIP package quotes, framing bids, labor rates, and lender carrying costs vary by supplier, design complexity, and market. Replace the defaults above with your real bid numbers before using this in a budget. This is not a quote and not a substitute for supplier pricing.
+  <br><br>
+  <b>On the 30-year projection.</b> Future energy prices cannot be known. The range shown spans EIA's long-range outlook on the low end and recent year-over-year increases on the high end; the expected line uses the actual 2001 to 2026 compound rate for US residential electricity. Heating and cooling loads are modeled from regional climate averages, not from your plans or a load calculation. The 35% default is deliberately conservative against a house built to current code; published figures of 50 to 60% are measured against the 2006 IECC and are not comparable. Figures are nominal dollars, not discounted to present value.
 </div>
 
 <footer>
@@ -521,8 +594,29 @@ const A_DEF = {
   dumpS:       {v:1,    label:"Dumpsters per 1,000 sf, SIPs", unit:"", src:"Jobsite waste studies", group:"Quality & waste", step:1},
 
   atticVal:    {v:50,   label:"Attic storage value", unit:"$/sf", src:"Regional storage comps", group:"Value gained", step:5},
-  atticSf:     {v:null, label:"Storage gained under SIP roof panels", unit:"sf", src:"Auto · 5% of floor area · editable", group:"Value gained", step:10, auto:true}
+  atticSf:     {v:null, label:"Storage gained under SIP roof panels", unit:"sf", src:"Auto · 5% of floor area · editable", group:"Value gained", step:10, auto:true},
+
+  sipHvac:     {v:35,   label:"SIP heating + cooling savings vs code-built framing", unit:"%", src:"Conservative. ORNL: SIP room 8 cfm vs 121 cfm at 50 Pa", group:"Energy", step:1},
+  elecPrice:   {v:18.34,label:"Residential electricity price", unit:"¢/kWh", src:"EIA, US average, Sept 2026", group:"Energy", step:0.25},
+  gasPrice:    {v:19.83,label:"Residential natural gas price", unit:"$/Mcf", src:"EIA, US average, May 2026", group:"Energy", step:0.25},
+  hpCop:       {v:2.8,  label:"Heat pump seasonal efficiency (COP)", unit:"×", src:"Typical new cold-climate heat pump", group:"Energy", step:0.1},
+  acCop:       {v:3.5,  label:"Air conditioning seasonal efficiency (COP)", unit:"×", src:"Roughly SEER 14 to 15", group:"Energy", step:0.1},
+  afue:        {v:92,   label:"Gas furnace efficiency (AFUE)", unit:"%", src:"Current federal minimum class", group:"Energy", step:1},
+
+  years:       {v:30,   label:"Years modeled", unit:"yr", src:"Typical mortgage term", group:"Escalation", step:5},
+  escMid:      {v:3.5,  label:"Expected energy escalation", unit:"%/yr", src:"US residential electricity CAGR, 2001 to 2026 (EIA)", group:"Escalation", step:0.1},
+  escLow:      {v:2.4,  label:"Low escalation", unit:"%/yr", src:"EIA AEO 2026, roughly flat in real terms", group:"Escalation", step:0.1},
+  escHigh:     {v:7.0,  label:"High escalation", unit:"%/yr", src:"Recent year-over-year, EIA 2026", group:"Escalation", step:0.1}
 };
+// Delivered HVAC load, kBtu per sq ft per year, new code-built home, by ZIP first digit
+const CLIMATE = [
+  {h:22,c:2,  n:"New England"},      {h:20,c:3,  n:"NY / NJ / PA"},
+  {h:15,c:5,  n:"Mid-Atlantic"},     {h:8, c:9,  n:"Southeast"},
+  {h:21,c:4,  n:"Ohio Valley"},      {h:26,c:3,  n:"Upper Midwest"},
+  {h:20,c:6,  n:"Plains / Illinois"},{h:9, c:10, n:"South Central"},
+  {h:18,c:4,  n:"Mountain West"},    {h:10,c:3,  n:"Pacific"}
+];
+let FUEL = "mix";
 // cycle-time model, days per 3,000 sf conditioned
 const PHASES_DEF = [
   {key:"walls", label:"Walls and roof",   f:12, s:5},
@@ -601,6 +695,54 @@ function computeEstimate(inp, A, PHASES){
     totalF, totalS, costSavings, savings
   };
 }
+
+function computeEnergy(inp, A, r, fuel, CLIMATE){
+  const g = k => A[k].v;
+  const L = CLIMATE[parseInt(inp.zip[0],10)];
+  const sf = r.condSf;
+
+  const heatKbtu = sf * L.h;
+  const coolKbtu = sf * L.c;
+  const ePrice = g("elecPrice")/100;      // $ per kWh
+  const gPrice = g("gasPrice")/1027;      // $ per kBtu (1 Mcf = 1,027 kBtu)
+
+  const coolCost = coolKbtu / 3.412 / g("acCop") * ePrice;
+  const heatElec = heatKbtu / 3.412 / g("hpCop") * ePrice;
+  const heatGas  = heatKbtu / (g("afue")/100) * gPrice;
+
+  const heatCost = fuel === "elec" ? heatElec
+                 : fuel === "gas"  ? heatGas
+                 : 0.5*heatElec + 0.5*heatGas;
+
+  const hvacBase = heatCost + coolCost;            // framing, year 1
+  const saveYr1  = hvacBase * g("sipHvac")/100;    // SIP advantage, year 1
+
+  const yrs = Math.max(1, Math.round(g("years")));
+  // cumulative of a geometric series: S * ((1+rate)^t - 1) / rate
+  const cum = (rate, t) => rate === 0 ? saveYr1*t
+            : saveYr1 * (Math.pow(1+rate, t) - 1) / rate;
+
+  const rates = { low:g("escLow")/100, mid:g("escMid")/100, high:g("escHigh")/100 };
+  const series = {low:[],mid:[],high:[]};
+  for (let t = 0; t <= yrs; t++){
+    for (const k in rates) series[k].push(r.savings + cum(rates[k], t));
+  }
+
+  // break-even: first year the net position reaches zero
+  let breakeven = null;
+  if (r.savings >= 0) breakeven = 0;
+  else for (let t = 1; t <= yrs; t++){
+    if (series.mid[t] >= 0){ breakeven = t; break; }
+  }
+
+  return {
+    region:L.n, heatKbtu, coolKbtu, hvacBase, saveYr1, yrs, series, breakeven, rates,
+    finalYearGap: saveYr1 * Math.pow(1+rates.mid, yrs-1),
+    net10: series.mid[Math.min(10,yrs)],
+    netEnd: series.mid[yrs],
+    energyOnly: cum(rates.mid, yrs)
+  };
+}
 /*CALC-END*/
 
 /* ================= formatting ================= */
@@ -655,7 +797,7 @@ function render(){
     el("chips").classList.add("hide");
     el("verdict").classList.add("hide");
     el("headline").innerHTML = '<span class="dim">$ —</span>';
-    ["chartSection","tableSection","assumpSection","refineSection"].forEach(id=>el(id).classList.add("hide"));
+    ["chartSection","tableSection","energySection","assumpSection","refineSection"].forEach(id=>el(id).classList.add("hide"));
     lastSavings = null;
     return;
   }
@@ -680,7 +822,7 @@ function render(){
   el("chipFrame").textContent = $$(r.totalF);
   el("chipSip").textContent = $$(r.totalS);
 
-  ["chartSection","tableSection","assumpSection","refineSection"].forEach(id=>{
+  ["chartSection","tableSection","energySection","assumpSection","refineSection"].forEach(id=>{
     const s = el(id);
     if (s.classList.contains("hide")){ s.classList.remove("hide"); s.classList.add("reveal"); }
   });
@@ -688,6 +830,7 @@ function render(){
   renderChart(r);
   renderTable(r, inp);
   renderSched(r);
+  renderEnergy(inp, r);
   renderRefine(r, inp);
 }
 
@@ -744,6 +887,88 @@ function renderChart(r){
     el("legend").innerHTML = CATS.map((c,i)=>
       `<span><i style="--sw:${GRAY[i]}"></i><i style="--sw:${REDS[i]}"></i>${c}</span>`).join("");
   }
+}
+
+/* ---------- energy crossover chart ---------- */
+let xo = null;
+function renderEnergy(inp, r){
+  const e = computeEnergy(inp, A, r, FUEL, CLIMATE);
+  const labels = e.series.mid.map((_,i)=>i);
+
+  // points only at break-even and each decade
+  const marks = new Set([10,20,30].filter(y=>y<=e.yrs));
+  if (e.breakeven !== null && e.breakeven > 0) marks.add(e.breakeven);
+  const ptR = labels.map(i=>marks.has(i)?4.5:0);
+
+  const cfg = {
+    type:"line",
+    data:{ labels, datasets:[
+      { data:e.series.low,  borderColor:"transparent", pointRadius:0, fill:false, tension:.25 },
+      { data:e.series.high, borderColor:"transparent", pointRadius:0,
+        fill:"-1", backgroundColor:"rgba(96,170,58,.16)", tension:.25 },
+      { data:e.series.mid, borderColor:"#3A7522", borderWidth:2.5, tension:.25,
+        pointRadius:ptR, pointBackgroundColor:"#3A7522", pointBorderColor:"#fff",
+        pointBorderWidth:1.5, pointHoverRadius:6, fill:false }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      animation: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? false : {duration:550, easing:"easeOutQuart"},
+      scales:{
+        x:{ grid:{display:false}, border:{color:"#E4E5E8"},
+            ticks:{ font:{family:"ui-monospace,Menlo,monospace",size:10}, color:"#6D6A69",
+                    maxRotation:0, autoSkip:false,
+                    callback:(v,i)=> (i%5===0 ? (i===0?"handover":"yr "+i) : "") } },
+        y:{ grid:{ color:c=>c.tick.value===0?"#222529":"#EFEFF1",
+                   lineWidth:c=>c.tick.value===0?1.5:1 },
+            border:{display:false},
+            ticks:{ font:{family:"ui-monospace,Menlo,monospace",size:10}, color:"#6D6A69",
+                    callback:v=> (v<0?"-$":"$") + Math.abs(Math.round(v/1000)) + "k" } }
+      },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#222529", cornerRadius:6, padding:11,
+          titleFont:{family:"Poppins,sans-serif",size:12}, bodyFont:{size:12},
+          callbacks:{
+            title:it=> it[0].dataIndex===0 ? "At handover" : "Year "+it[0].dataIndex,
+            label:()=>null,
+            afterBody:it=>{
+              const i = it[0].dataIndex;
+              return [ "Expected  "+$$(e.series.mid[i]),
+                       "Range     "+$$(e.series.low[i])+" to "+$$(e.series.high[i]) ];
+            }
+          }
+        }
+      }
+    }
+  };
+  if (xo){ xo.data = cfg.data; xo.options = cfg.options; xo.update(); }
+  else xo = new Chart(el("xoChart"), cfg);
+
+  // milestones
+  const beText = e.breakeven === 0 ? "Day one"
+               : e.breakeven === null ? "Beyond "+e.yrs+" yr"
+               : "Year "+e.breakeven;
+  const beSub  = e.breakeven === 0 ? "SIPs cost less up front here"
+               : e.breakeven === null ? "at expected escalation"
+               : "utility savings erase the premium";
+  el("milestones").innerHTML = `
+    <div class="ms be"><span class="ms-k">Break-even</span><span class="ms-v">${beText}</span><span class="ms-s">${beSub}</span></div>
+    <div class="ms"><span class="ms-k">Year 10</span><span class="ms-v">${$$(e.net10)}</span><span class="ms-s">ahead, cumulative</span></div>
+    <div class="ms"><span class="ms-k">Year ${e.yrs}</span><span class="ms-v">${$$(e.netEnd)}</span><span class="ms-s">ahead, cumulative</span></div>
+    <div class="ms"><span class="ms-k">Yr ${e.yrs} bill gap</span><span class="ms-v">${$$(e.finalYearGap)}</span><span class="ms-s">lower utility bill that year</span></div>`;
+
+  el("fuelNote").textContent = e.region + " climate · " + nn(e.hvacBase) +
+    "/yr framing HVAC · " + nn(e.saveYr1) + "/yr saved at year 1";
+
+  el("energyMath").innerHTML =
+    `MODEL: ${nn(r.condSf)} sf conditioned × ${CLIMATE[parseInt(inp.zip[0],10)].h} kBtu/sf heating and ` +
+    `${CLIMATE[parseInt(inp.zip[0],10)].c} kBtu/sf cooling → <b>${$$(e.hvacBase)}</b> framing HVAC in year 1 · ` +
+    `SIPs cut <b>${A.sipHvac.v}%</b> = <b>${$$(e.saveYr1)}</b> saved · escalated at <b>${A.escMid.v}%</b>/yr ` +
+    `(range ${A.escLow.v} to ${A.escHigh.v}%) for <b>${e.yrs}</b> years = <b>${$$(e.energyOnly)}</b> of energy savings, ` +
+    `added to the <b>${$$(r.savings)}</b> first-cost result above. Electricity ${A.elecPrice.v}¢/kWh, gas $${A.gasPrice.v}/Mcf, EIA 2026.`;
 }
 
 /* ---------- table ---------- */
@@ -887,6 +1112,14 @@ function refreshAssumptionFields(){
 
 /* ================= boot ================= */
 buildAssumptions();
+el("fuelSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-fuel]");
+  if (!b) return;
+  FUEL = b.dataset.fuel;
+  el("fuelSeg").querySelectorAll("button").forEach(x=>
+    x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
 [zipEl, sqftEl].forEach(i=>i.addEventListener("input", render));
 baseEl.addEventListener("change", render);
 zipEl.addEventListener("input", ()=>{ zipEl.value = zipEl.value.replace(/\D/g,"").slice(0,5); });
