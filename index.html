@@ -960,8 +960,8 @@ function renderEnergy(inp, r){
     <div class="ms"><span class="ms-k">Year ${e.yrs}</span><span class="ms-v">${$$(e.netEnd)}</span><span class="ms-s">ahead, cumulative</span></div>
     <div class="ms"><span class="ms-k">Yr ${e.yrs} bill gap</span><span class="ms-v">${$$(e.finalYearGap)}</span><span class="ms-s">lower utility bill that year</span></div>`;
 
-  el("fuelNote").textContent = e.region + " climate · " + nn(e.hvacBase) +
-    "/yr framing HVAC · " + nn(e.saveYr1) + "/yr saved at year 1";
+  el("fuelNote").textContent = e.region + " climate · " + $$(e.hvacBase) +
+    "/yr framing HVAC · " + $$(e.saveYr1) + "/yr saved at year 1";
 
   el("energyMath").innerHTML =
     `MODEL: ${nn(r.condSf)} sf conditioned × ${CLIMATE[parseInt(inp.zip[0],10)].h} kBtu/sf heating and ` +
