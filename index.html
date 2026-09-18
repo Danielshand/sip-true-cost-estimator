@@ -242,7 +242,7 @@ section>h2 small{
   font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:-0.02em;
   font-variant-numeric:tabular-nums;color:var(--green-ink);
 }
-.ms.be .ms-v{color:var(--red)}
+.ms.be .ms-v,.ms .ms-v.neg{color:var(--red)}
 .ms .ms-s{font-size:11px;color:var(--ink-3);line-height:1.35}
 
 .band-key{
@@ -956,8 +956,8 @@ function renderEnergy(inp, r){
                : "utility savings erase the premium";
   el("milestones").innerHTML = `
     <div class="ms be"><span class="ms-k">Break-even</span><span class="ms-v">${beText}</span><span class="ms-s">${beSub}</span></div>
-    <div class="ms"><span class="ms-k">Year 10</span><span class="ms-v">${$$(e.net10)}</span><span class="ms-s">ahead, cumulative</span></div>
-    <div class="ms"><span class="ms-k">Year ${e.yrs}</span><span class="ms-v">${$$(e.netEnd)}</span><span class="ms-s">ahead, cumulative</span></div>
+    <div class="ms"><span class="ms-k">Year 10</span><span class="ms-v${e.net10<0?" neg":""}">${$$(e.net10)}</span><span class="ms-s">${e.net10<0?"still behind":"ahead, cumulative"}</span></div>
+    <div class="ms"><span class="ms-k">Year ${e.yrs}</span><span class="ms-v${e.netEnd<0?" neg":""}">${$$(e.netEnd)}</span><span class="ms-s">${e.netEnd<0?"still behind":"ahead, cumulative"}</span></div>
     <div class="ms"><span class="ms-k">Yr ${e.yrs} bill gap</span><span class="ms-v">${$$(e.finalYearGap)}</span><span class="ms-s">lower utility bill that year</span></div>`;
 
   el("fuelNote").textContent = e.region + " climate · " + $$(e.hvacBase) +
